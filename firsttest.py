@@ -15,7 +15,7 @@ def explore_website(url, banlist, text_list):
     url_list = [url]
     visited_list = []
     initialt = t.time()
-    while url_list != []:
+    while url_list != [] and len(text_list) < 10:
         actual_url = url_list.pop(0)
         visited_list.append(actual_url)
         print(i, actual_url, t.time()-initialt, "s")
