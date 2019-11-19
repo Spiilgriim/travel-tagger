@@ -3,7 +3,7 @@ import urllib.request
 import time as t
 import spacy
 import os
-from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 import pandas
 import json
 
@@ -11,8 +11,9 @@ url = "https://www.votretourdumonde.com"
 banlist = ['#comment']
 nlp = spacy.load('fr_core_news_md')
 
+
 def explore_website(url, banlist):
-    i=0
+    i = 0
     url_list = [url]
     visited_list = []
     initialt = t.time()
@@ -27,16 +28,17 @@ def explore_website(url, banlist):
             if actual_url.find(x) != -1:
                 cpass = True
         if not cpass:
-            try: 
-                req = urllib.request.Request(actual_url, headers={'User-Agent' : "Magic Browser"}) 
-                con = urllib.request.urlopen( req )
+            try:
+                req = urllib.request.Request(
+                    actual_url, headers={'User-Agent': "Magic Browser"})
+                con = urllib.request.urlopen(req)
                 webpage = str(con.read().decode("utf-8"))
                 soup = bs4.BeautifulSoup(webpage, "lxml")
                 article = {"title": soup.title.get_text(), "text": ""}
                 for poccur in soup.find_all('p'):
                     article['text'] += " " + poccur.get_text()
                 file = open('./articles/' + alpha_string(url) + '.txt', 'a')
-                json.dump(article,file)
+                json.dump(article, file)
                 file.write('\n')
                 file.close()
                 link_list = []
@@ -49,15 +51,16 @@ def explore_website(url, banlist):
                 print('fail')
                 continue
     return 0
-        
+
 
 def evaluate(url, link_list, visited_list, url_list):
     new_link_list = []
     for x in link_list:
-        if url_check(x,url):
+        if url_check(x, url):
             if not x in visited_list and not x in new_link_list and not x in url_list:
                 new_link_list.append(x)
     return new_link_list
+
 
 def url_check(target_url, url):
     if target_url.startswith("http://"):
@@ -70,11 +73,12 @@ def url_check(target_url, url):
         url = url[8:]
     return target_url.startswith(url)
 
+
 def alpha_string(string):
     res = ''
     for x in string:
         if x.isalpha():
-            res+=x
+            res += x
     return res
 
 
@@ -82,24 +86,46 @@ def spclabel(text):
     doc = nlp(text)
     return [ent.label_ for ent in doc.ents]
 
+
 def blogtdidf(blogpath):
+    n = 1000
     title_list = []
     blog = open(blogpath, 'r')
     lines = blog.readlines()
-    tag_list = [[]] * 10
-    for x in range(10):
-        doc = nlp(json.loads(lines[x+1])['title'] + ' ' + json.loads(lines[x+1])['text'])
-        if len(doc) > 400:
-            remove_location = " ".join([ent.text for ent in doc.ents if ent.label_ != 'LOC' and ent.text.isalpha()])
-            tag_list[x] = [ent.text for ent in doc.ents if ent.label_ == 'LOC']
-            doc = nlp(remove_location)
-            title_list.append(" ".join([token.lemma_ for token in doc if not token.is_stop and not token.is_punct and token.text.isalpha()]))
+    tag_list = []
     passing_tag = []
-    for y in tag_list:
-        passing_tag.append(" ".join([x for x in y]))
+    article_list = []
+    for x in range(n):
+        doc = nlp(json.loads(lines[x+1])['title'] +
+                  ' ' + json.loads(lines[x+1])['text'])
+        if len(doc) > 400:
+            article_list.append(json.loads(lines[x+1])['title'])
+            remove_location = " ".join(
+                [ent.text for ent in doc.ents if ent.label_ != 'LOC' and ent.text.isalpha()])
+            tag_list.append(
+                [ent.text for ent in doc.ents if ent.label_ == 'LOC' and ent.text.isalpha()])
+            passing_tag.append(" ".join([element for element in tag_list[-1]]))
+            doc = nlp(remove_location)
+            title_list.append(" ".join(
+                [token.lemma_ for token in doc if not token.is_stop and not token.is_punct and token.text.isalpha()]))
+
+    vec = CountVectorizer(binary=False)
+    vec.fit(passing_tag)
+    res = pandas.DataFrame(vec.transform(passing_tag).toarray())
+    maxidx = res.idxmax(axis=1)
+    maximum = res.max(axis=1)
+    for i in range(len(res)):
+        print(article_list[i], sorted(
+            vec.vocabulary_.keys())[maxidx[i]], maximum[i])
+
+    '''
     vec = TfidfVectorizer()
     vec.fit(passing_tag)
-    data_frame = pandas.DataFrame(vec.transform(passing_tag).toarray(), columns=sorted(vec.vocabulary_.keys()))
-    
+    data_frame = pandas.DataFrame(vec.transform(
+        passing_tag).toarray(), columns=sorted(vec.vocabulary_.keys()))
+    print(data_frame)
+    '''
+
+
 #text_list = explore_website(url, banlist)
 blogtdidf('./articles/httpswwwvotretourdumondecom.txt')
