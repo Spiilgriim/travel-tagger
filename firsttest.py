@@ -4,8 +4,10 @@ import time as t
 import spacy
 import os
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
+from sklearn.cluster import MiniBatchKMeans
 import pandas
 import json
+import wikipedia
 
 url = "https://www.votretourdumonde.com"
 banlist = ['#comment']
@@ -34,7 +36,8 @@ def explore_website(url, banlist):
                 con = urllib.request.urlopen(req)
                 webpage = str(con.read().decode("utf-8"))
                 soup = bs4.BeautifulSoup(webpage, "lxml")
-                article = {"title": soup.title.get_text(), "text": ""}
+                article = {"title": soup.title.get_text(), "text": "",
+                           "link": actual_url}
                 for poccur in soup.find_all('p'):
                     article['text'] += " " + poccur.get_text()
                 file = open('./articles/' + alpha_string(url) + '.txt', 'a')
@@ -88,25 +91,28 @@ def spclabel(text):
 
 
 def blogtdidf(blogpath):
-    n = 1000
-    title_list = []
+    article_content = []
     blog = open(blogpath, 'r')
     lines = blog.readlines()
+    n = 200  # len(lines)
     tag_list = []
+    link_list = []
     passing_tag = []
     article_list = []
     for x in range(n):
-        doc = nlp(json.loads(lines[x+1])['title'] +
-                  ' ' + json.loads(lines[x+1])['text'])
+        json_text = json.loads(lines[x])
+        doc = nlp(json_text['title'] +
+                  ' ' + json_text['text'])
         if len(doc) > 400:
-            article_list.append(json.loads(lines[x+1])['title'])
+            article_list.append(json_text['title'])
+            link_list.append(json_text['link'])
             remove_location = " ".join(
                 [ent.text for ent in doc.ents if ent.label_ != 'LOC' and ent.text.isalpha()])
             tag_list.append(
                 [ent.text for ent in doc.ents if ent.label_ == 'LOC' and ent.text.isalpha()])
             passing_tag.append(" ".join([element for element in tag_list[-1]]))
             doc = nlp(remove_location)
-            title_list.append(" ".join(
+            article_content.append(" ".join(
                 [token.lemma_ for token in doc if not token.is_stop and not token.is_punct and token.text.isalpha()]))
 
     vec = CountVectorizer(binary=False)
@@ -114,18 +120,25 @@ def blogtdidf(blogpath):
     res = pandas.DataFrame(vec.transform(passing_tag).toarray())
     maxidx = res.idxmax(axis=1)
     maximum = res.max(axis=1)
-    for i in range(len(res)):
-        print(article_list[i], sorted(
-            vec.vocabulary_.keys())[maxidx[i]], maximum[i])
+    tags = sorted(vec.vocabulary_.keys())
+    # for i in range(len(res)):
+    #print(article_list[i], tags[maxidx[i]], maximum[i], link_list[i])
 
-    '''
-    vec = TfidfVectorizer()
-    vec.fit(passing_tag)
-    data_frame = pandas.DataFrame(vec.transform(
-        passing_tag).toarray(), columns=sorted(vec.vocabulary_.keys()))
-    print(data_frame)
-    '''
+    vec2 = TfidfVectorizer()
+    vec2.fit(article_content)
+    features = vec2.transform(article_content)
 
+    n_clusters = 9
+    cls = MiniBatchKMeans(n_clusters=n_clusters)
+    cls.fit(features)
+    cls.predict(features)
+    clusters = cls.labels_
+    for i in range(n_clusters):
+        print(i)
+        index_list = [j for j, x in enumerate(clusters) if x == i]
+        for article in index_list:
+            print(article_list[article])
+        print('\n\n\n\n\n')
 
-#text_list = explore_website(url, banlist)
+        #text_list = explore_website(url, banlist)
 blogtdidf('./articles/httpswwwvotretourdumondecom.txt')
