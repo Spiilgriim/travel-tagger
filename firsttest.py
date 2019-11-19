@@ -7,7 +7,6 @@ from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 from sklearn.cluster import MiniBatchKMeans
 import pandas
 import json
-import wikipedia
 
 url = "https://www.votretourdumonde.com"
 banlist = ['#comment']
