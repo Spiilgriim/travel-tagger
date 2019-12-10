@@ -1,18 +1,28 @@
+import re
 import bs4
 import urllib.request
 import time as t
 import spacy
 import os
-from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
+from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer, TfidfTransformer
 from sklearn.cluster import MiniBatchKMeans
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report, confusion_matrix, accuracy_score
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.linear_model import SGDClassifier
+from sklearn.model_selection import GridSearchCV
 import pandas
 import json
 import gensim
 import random as r
 from tqdm import tqdm
+import numpy as np
+import pickle
+
 url = "https://oiseaurose.com/"
 banlist = ['#comment', '#respond', '#profile',
-           '?replytocom', '.jpg', '.jpeg', '.png', '.gif']
+           '?replytocom', '.jpg', '.jpeg', '.png', '.gif', '?ical', '.pdf', '.mp3', '.mp4', 'facebook', 'instagram', 'pinterest', 'twitter', 'linkedin']
 nlp = spacy.load('fr_core_news_md')
 
 
@@ -165,7 +175,7 @@ def topic_modelling(article_content, model_name):
     corpus = [dictionnary.doc2bow(text) for text in article_content]
 
     lda = gensim.models.ldamodel.LdaModel(
-        corpus, num_topics=9, id2word=dictionnary)
+        corpus, num_topics=15, id2word=dictionnary)
     lda.save(model_name + '.gensim')
     topics = lda.print_topics(num_words=4)
     for topic in topics:
@@ -203,25 +213,153 @@ def clustering(article_content, article_list):
         print('\n\n\n\n\n')
 
 
-url_list = ['https://www.bons-plans-voyage-new-york.com/', 'https://www.decouvertemonde.com/', 'https://onedayonetravel.com/',
-            'https://www.unsacsurledos.com/', 'https://www.madame-oreille.com/', 'https://www.worldelse.com/', 'https://milesandlove.com/', 'https://www.travel-me-happy.com/']
+def createData(article_list, dataAmount, targetName):
+    n = len(article_list)
+    for article_index, article_path in enumerate(article_list):
+        blog = open('./articles/' + article_path, 'r')
+        lines = blog.readlines()
+        article_length = len(lines)
+        for line in range(article_length):
+            if r.random() < (dataAmount/n)/article_length:
+                text = json.loads(lines[line])
+                mark = ''
+                while not mark in ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]:
+                    print(text["title"])
+                    print(text['link'])
+                    mark = input(str(article_index + 1) + '/' + str(n) + ' - ' + str(line) +
+                                 '/' + str(article_length) + ' article\'s category: ')
+                trim_text = text['title'] + ' ' + text['text']
+                trim_text = re.sub(r"j\'", ' ', trim_text)
+                trim_text = re.sub(r"l\'", ' ', trim_text)
+                trim_text = re.sub(r"d\'", ' ', trim_text)
+                trim_text = re.sub(r"t\'", ' ', trim_text)
+                trim_text = re.sub(r"s\'", ' ', trim_text)
+                trim_text = re.sub(r"c\'", ' ', trim_text)
+                trim_text = re.sub(r"n\'", ' ', trim_text)
+                trim_text = re.sub(r"j’", ' ', trim_text)
+                trim_text = re.sub(r"l’", ' ', trim_text)
+                trim_text = re.sub(r"d’", ' ', trim_text)
+                trim_text = re.sub(r"t’", ' ', trim_text)
+                trim_text = re.sub(r"s’", ' ', trim_text)
+                trim_text = re.sub(r"c’", ' ', trim_text)
+                trim_text = re.sub(r"n’", ' ', trim_text)
+                trim_text.replace('\n', ' ')
+                trim_text = re.sub("\s+", " ", trim_text)
+                doc = nlp(trim_text)
+                article_content = " ".join(
+                    [token.lemma_ for token in doc if not token.is_stop and not token.is_punct and not ";" in token.text])
+                file = open('./data_for_ml/' + targetName + '.csv', 'a')
+                file.write(article_content + ';' + mark)
+                file.write('\n')
+                file.close()
 
-for x in url_list:
-    text_list = explore_website(x, banlist)
+def getDataFromCSV(csv_path):
+    articles = pandas.read_csv(csv_path, sep=";", header = None, names=["article", "tag"])
+    return articles["article"].to_numpy(), articles["tag"].to_numpy()
 
-# updateModelWith(blog_preprocess(
-#    './articles/httpswwwvotretourdumondecom.txt', 0.33), 'model2')
-# topic_modelling(blog_preprocess(
-#   './articles/httpscarnetstraversecom.txt', 0.5), 'model2')
+def tdIdfSplitForML(csv_path):
+    X,y = getDataFromCSV(csv_path)
+    tfidfconverter = TfidfVectorizer(max_features=3000)
+    X = tfidfconverter.fit_transform(X).toarray()
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
+    return X_train, X_test, y_train, y_test
+
+def random_forest(csv_path):
+    X_train, X_test, y_train, y_test = tdIdfSplitForML(csv_path)
+    classifier = RandomForestClassifier(n_estimators=1000, random_state=0)
+    classifier.fit(X_train, y_train)
+    y_pred = classifier.predict(X_test)
+    print(confusion_matrix(y_test,y_pred))
+    print(classification_report(y_test,y_pred))
+    print(accuracy_score(y_test, y_pred))
+    with open('random_forest_text_classifier', 'wb') as picklefile:
+        pickle.dump(classifier,picklefile)
+
+def naive_bayes(csv_path):
+    X_train, X_test, y_train, y_test = tdIdfSplitForML(csv_path)
+    classifier = MultinomialNB()
+    classifier.fit(X_train, y_train)
+    y_pred = classifier.predict(X_test)
+    print(confusion_matrix(y_test,y_pred))
+    print(classification_report(y_test,y_pred))
+    print(accuracy_score(y_test, y_pred))
+    with open('naive_bayes_text_classifier', 'wb') as picklefile:
+        pickle.dump(classifier,picklefile)
+
+def SVM(csv_path):
+    X_train, X_test, y_train, y_test = tdIdfSplitForML(csv_path)
+    classifier = SGDClassifier(loss='hinge', penalty='l2',alpha=1e-3, random_state=0)
+    classifier.fit(X_train, y_train)
+    y_pred = classifier.predict(X_test)
+    print(confusion_matrix(y_test,y_pred))
+    print(classification_report(y_test,y_pred))
+    print(accuracy_score(y_test, y_pred))
+    with open('svm_text_classifier', 'wb') as picklefile:
+        pickle.dump(classifier,picklefile)
+
+random_forest("./data_for_ml/DataSet1.csv")
 
 """
-Next to do :
-'https://www.gaijinjapan.org/',
-'https://lovelivetravel.fr/',
-'https://maathiildee.com/',
-'https://www.instinct-voyageur.fr/',
-'https://www.novo-monde.com/',
-'https://cloetclem.fr/',
-'https://www.voyagesetc.fr/',
-'https://www.lostintheusa.fr/'
+              precision    recall  f1-score   support
+
+           0       0.76      0.93      0.84       113
+           1       0.68      0.67      0.67        54
+           2       0.83      0.50      0.62        10
+           3       0.00      0.00      0.00         3
+           4       0.00      0.00      0.00         9
+           5       0.00      0.00      0.00         2
+           7       0.50      0.12      0.20         8
+           8       0.00      0.00      0.00         4
+
+    accuracy                           0.72       203
+   macro avg       0.35      0.28      0.29       203
+weighted avg       0.66      0.72      0.68       203
+
+0.7241379310344828
+
+"""
+
+naive_bayes("./data_for_ml/DataSet1.csv")
+
+"""
+              precision    recall  f1-score   support
+
+           0       0.71      0.96      0.82       113
+           1       0.61      0.50      0.55        54
+           2       0.71      0.50      0.59        10
+           3       0.00      0.00      0.00         3
+           4       0.00      0.00      0.00         9
+           5       0.00      0.00      0.00         2
+           7       0.00      0.00      0.00         8
+           8       0.00      0.00      0.00         4
+
+    accuracy                           0.69       203
+   macro avg       0.25      0.24      0.24       203
+weighted avg       0.59      0.69      0.63       203
+
+0.6896551724137931
+
+"""
+
+SVM("./data_for_ml/DataSet1.csv")
+
+"""
+              precision    recall  f1-score   support
+
+           0       0.75      0.90      0.82       113
+           1       0.62      0.59      0.60        54
+           2       0.83      0.50      0.62        10
+           3       0.00      0.00      0.00         3
+           4       1.00      0.11      0.20         9
+           5       0.00      0.00      0.00         2
+           6       0.00      0.00      0.00         0
+           7       0.40      0.25      0.31         8
+           8       1.00      0.50      0.67         4
+
+    accuracy                           0.71       203
+   macro avg       0.51      0.32      0.36       203
+weighted avg       0.70      0.71      0.68       203
+
+0.7093596059113301
+
 """
