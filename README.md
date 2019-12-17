@@ -188,7 +188,7 @@ You can try these programs after setting up your environment by adjusting the co
 ```bash
 conda activate myenv
 
-python3 main.py [--fetchwebsite][url][--location_tag][folder_path][--clustering][n_clusters][--topic_modeling][model_name][--label_data][data_number][--naive_bayes][labeled_csv][--svm_classifier][labeled_csv][--random_forest][labeled_csv][-h]
+python3 main.py [--options]
 
 conda deactivate
 ```
