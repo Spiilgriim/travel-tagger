@@ -143,7 +143,7 @@ def blog_preprocess(blogpath, location=False, clustering=False, random=1):
 
 def serialize_pre_process(blogpaths, location=False, clustering=False, random=[]):
     if len(random) < len(blogpaths):
-        random += [1] * len(blogpaths) - len(random)
+        random += [1] * (len(blogpaths) - len(random))
     if not location:
         article_content_agglo = []
         for index, x in enumerate(blogpaths):
@@ -195,7 +195,8 @@ def updateModelWith(other_article_content, model_to_update):
 
 
 def clustering(article_content, article_list):
-    article_content = " ".join(article_content)
+    for i, x in enumerate(article_content):
+        article_content[i] = " ".join(x)
     vec2 = TfidfVectorizer()
     vec2.fit(article_content)
     features = vec2.transform(article_content)
@@ -216,7 +217,7 @@ def clustering(article_content, article_list):
 def createData(article_list, dataAmount, targetName):
     n = len(article_list)
     for article_index, article_path in enumerate(article_list):
-        blog = open('./articles/' + article_path, 'r')
+        blog = open(article_path, 'r')
         lines = blog.readlines()
         article_length = len(lines)
         for line in range(article_length):
@@ -253,51 +254,60 @@ def createData(article_list, dataAmount, targetName):
                 file.write('\n')
                 file.close()
 
+
 def getDataFromCSV(csv_path):
-    articles = pandas.read_csv(csv_path, sep=";", header = None, names=["article", "tag"])
+    articles = pandas.read_csv(
+        csv_path, sep=";", header=None, names=["article", "tag"])
     return articles["article"].to_numpy(), articles["tag"].to_numpy()
 
+
 def tdIdfSplitForML(csv_path):
-    X,y = getDataFromCSV(csv_path)
+    X, y = getDataFromCSV(csv_path)
     tfidfconverter = TfidfVectorizer(max_features=3000)
     X = tfidfconverter.fit_transform(X).toarray()
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=0)
     return X_train, X_test, y_train, y_test
+
 
 def random_forest(csv_path):
     X_train, X_test, y_train, y_test = tdIdfSplitForML(csv_path)
     classifier = RandomForestClassifier(n_estimators=1000, random_state=0)
     classifier.fit(X_train, y_train)
     y_pred = classifier.predict(X_test)
-    print(confusion_matrix(y_test,y_pred))
-    print(classification_report(y_test,y_pred))
+    print(confusion_matrix(y_test, y_pred))
+    print(classification_report(y_test, y_pred))
     print(accuracy_score(y_test, y_pred))
     with open('random_forest_text_classifier', 'wb') as picklefile:
-        pickle.dump(classifier,picklefile)
+        pickle.dump(classifier, picklefile)
+
 
 def naive_bayes(csv_path):
     X_train, X_test, y_train, y_test = tdIdfSplitForML(csv_path)
     classifier = MultinomialNB()
     classifier.fit(X_train, y_train)
     y_pred = classifier.predict(X_test)
-    print(confusion_matrix(y_test,y_pred))
-    print(classification_report(y_test,y_pred))
+    print(confusion_matrix(y_test, y_pred))
+    print(classification_report(y_test, y_pred))
     print(accuracy_score(y_test, y_pred))
     with open('naive_bayes_text_classifier', 'wb') as picklefile:
-        pickle.dump(classifier,picklefile)
+        pickle.dump(classifier, picklefile)
+
 
 def SVM(csv_path):
     X_train, X_test, y_train, y_test = tdIdfSplitForML(csv_path)
-    classifier = SGDClassifier(loss='hinge', penalty='l2',alpha=1e-3, random_state=0)
+    classifier = SGDClassifier(
+        loss='hinge', penalty='l2', alpha=1e-3, random_state=0)
     classifier.fit(X_train, y_train)
     y_pred = classifier.predict(X_test)
-    print(confusion_matrix(y_test,y_pred))
-    print(classification_report(y_test,y_pred))
+    print(confusion_matrix(y_test, y_pred))
+    print(classification_report(y_test, y_pred))
     print(accuracy_score(y_test, y_pred))
     with open('svm_text_classifier', 'wb') as picklefile:
-        pickle.dump(classifier,picklefile)
+        pickle.dump(classifier, picklefile)
 
-random_forest("./data_for_ml/DataSet1.csv")
+# random_forest("./data_for_ml/DataSet1.csv")
+
 
 """
               precision    recall  f1-score   support
@@ -319,7 +329,7 @@ weighted avg       0.66      0.72      0.68       203
 
 """
 
-naive_bayes("./data_for_ml/DataSet1.csv")
+# naive_bayes("./data_for_ml/DataSet1.csv")
 
 """
               precision    recall  f1-score   support
@@ -341,7 +351,7 @@ weighted avg       0.59      0.69      0.63       203
 
 """
 
-SVM("./data_for_ml/DataSet1.csv")
+# SVM("./data_for_ml/DataSet1.csv")
 
 """
               precision    recall  f1-score   support
