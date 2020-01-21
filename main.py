@@ -7,11 +7,11 @@ import config
 
 
 def main(argv):
-    help_content = "\n main.py [--fetch_website][--location_tag][--clustering][--topic_modeling][--label_data][--naive_bayes][--svm_classifier][-random_forest][-h]\n\n --fetch_website url: fetch the content of a website by web crawling, will store it in the articles folder with automatically generated name\n --location_tag folder_path: find location tags of articles in the folder article_path will by default use the whole articles folder as path\n --clustering n_clusters: cluster articles with articles TD-IDF as feature will by default use the whole articles folder as path (modify in the config file)\n --topic_modeling model_name: perform topic modeling with articles TD-IDF as feature will by default use the whole articles folder as path (modify in the config file)\n --label_data data_number: Label data_number article selected randomly from the folder article_path (modify in the config file) write it at labeled_data.csv (modify target_ path in the config file)\n --naive_bayes labeled_csv: perform naive bayes classification on data expect csv path to labeled data\n --svm_classifier labeled_csv: perform naive bayes classification on data expect csv path to labeled data\n --random_forest labeled_csv: perform naive bayes classification on data expect csv path to labeled data\n -h, --help: displays this help\n"
+    help_content = "\n main.py [--fetch_website][--location_tag][--clustering][--topic_modeling][--label_data][--naive_bayes][--svm_classifier][-random_forest][-h]\n\n --fetch_website url: fetch the content of a website by web crawling, will store it in the articles folder with automatically generated name\n --location_tag: find location tags of articles in the folder article_path will by default use the whole articles folder as path\n --clustering n_clusters: cluster articles with articles TD-IDF as feature will by default use the whole articles folder as path (modify in the config file)\n --topic_modeling model_name: perform topic modeling with articles TD-IDF as feature will by default use the whole articles folder as path (modify in the config file)\n --label_data data_number: Label data_number article selected randomly from the folder article_path (modify in the config file) write it at labeled_data.csv (modify target_ path in the config file)\n --naive_bayes labeled_csv: perform naive bayes classification on data expect csv path to labeled data\n --svm_classifier labeled_csv: perform naive bayes classification on data expect csv path to labeled data\n --random_forest labeled_csv: perform naive bayes classification on data expect csv path to labeled data\n -h, --help: displays this help\n"
     execute = []
     try:
         opts, args = getopt(argv, "h", [
-                            "help", "fetch_website=", "location_tag=", "clustering=", "topic_modeling=", "label_data=", "naive_bayes=", "svm_classifier=", "random_forest="])
+                            "help", "fetch_website=", "location_tag", "clustering=", "topic_modeling=", "label_data=", "naive_bayes=", "svm_classifier=", "random_forest="])
     except GetoptError:
         print('Invalid argument')
         exit(2)
@@ -35,8 +35,12 @@ def main(argv):
             blogpaths = config.folder_path
             only_files = [join(blogpaths, f) for f in listdir(
                 blogpaths) if isfile(join(blogpaths, f))]
-            article_content, article_list = aux.serialize_pre_process(
-                only_files, clustering=True)
+            if config.preprocess_version == 2:
+                article_content, article_list = aux.serialize_pre_process2(
+                    only_files, clustering=True, location=True)
+            else:
+                article_content, article_list = aux.serialize_pre_process(
+                    only_files, clustering=True, location=True)
             aux.clustering(article_content, article_list, int(program[1]))
         if program[0] == '--location_tag':
             if program[1] != '':
@@ -45,8 +49,12 @@ def main(argv):
             blogpaths = config.folder_path
             only_files = [join(blogpaths, f) for f in listdir(
                 blogpaths) if isfile(join(blogpaths, f))]
-            article_content, article_list = aux.serialize_pre_process(
-                only_files, location=True)
+            if config.preprocess_version == 2:
+                article_content, article_list = aux.serialize_pre_process2(
+                    only_files, location=True)
+            else:
+                article_content, article_list = aux.serialize_pre_process(
+                    only_files, location=True)
             aux.location_tag(article_content, article_list)
         if program[0] == '--topic_modeling':
             if program[1] == '':
@@ -55,8 +63,12 @@ def main(argv):
             blogpaths = config.folder_path
             only_files = [join(blogpaths, f) for f in listdir(
                 blogpaths) if isfile(join(blogpaths, f))]
-            article_content = aux.serialize_pre_process(
-                only_files)
+            if config.preprocess_version == 2:
+                article_content = aux.serialize_pre_process2(
+                    only_files)
+            else:
+                article_content = aux.serialize_pre_process(
+                    only_files)
             aux.topic_modeling(article_content, program[1])
         if program[0] == '--label_data':
             if program[1] == '':
