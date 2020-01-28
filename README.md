@@ -178,7 +178,7 @@ You can try these programs after setting up your environment by adjusting the co
 - `ban_list`: Words that if contained in a url will make the url ignored when fetching the content of a website
 - `folder_path`: Folder containing the articles to use
 - `target_path`: Path to save the data
-- `preprocess_version`: 1 to use spacy preprocess (`blog_preprocess` in `auxFuncs.py`), 2 to use standford nlp for preprocess (`blog_preprocess2` in `auxFuncs.py`)
+- `preprocess_version`: 1 to use spacy preprocess (`blog_preprocess` in `auxFuncs.py`), 2 to use Stanford nlp for preprocess (`blog_preprocess2` in `auxFuncs.py`)
 - `word_embedding`: either `'TdIdf'` or `'word2vec'` defines which word embedding is used for supervised learning tools (Warning: word2vec can not yet be used for naive_bayes)
 
 ## Run Options
