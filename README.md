@@ -167,7 +167,7 @@ For more details checkout [conda's doc](https://docs.conda.io/projects/conda/en/
 
 ## Word2Vec Model
 
-The Word2Vec model for the french language used in tests is from [Kyubyon's wordvectors](https://github.com/Kyubyong/wordvectors)
+The Word2Vec model for the french language used in tests is from [Kyubyon's wordvectors](https://github.com/Kyubyong/wordvectors) (you must download all the files only one out of 4 are uploaded here for demonstration purpose)
 
 # Usage
 
