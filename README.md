@@ -7,8 +7,6 @@ Use conda to setup a virtual environment
 ## Library List
 
 ```bash
-# packages in environment at /home/alexandre/.anaconda3/envs/travelassist:
-#
 # Name                    Version                   Build  Channel
 _libgcc_mutex             0.1                        main
 asn1crypto                1.2.0                    py37_0    conda-forge
@@ -23,8 +21,8 @@ boto                      2.49.0                   py37_0    anaconda
 boto3                     1.10.19                    py_0    anaconda
 botocore                  1.13.19                    py_0    anaconda
 bz2file                   0.98                     py37_1    anaconda
-ca-certificates           2019.10.16                    0
-certifi                   2019.9.11                py37_0
+ca-certificates           2019.11.27                    0
+certifi                   2019.11.28               py37_0
 cffi                      1.13.0           py37h8022711_0    conda-forge
 chardet                   3.0.4                 py37_1003
 cryptography              2.7              py37h72c5cf5_0    conda-forge
@@ -92,6 +90,7 @@ murmurhash                1.0.2            py37he6710b0_0
 nbconvert                 5.6.0                    py37_1
 nbformat                  4.4.0                    py37_0
 ncurses                   6.1                  he6710b0_1
+nltk                      3.4.5                    py37_0
 notebook                  6.0.1                    py37_0
 numpy                     1.17.2           py37hf9bf1b6_0
 numpy-base                1.17.2           py37h2f8d375_0
@@ -108,6 +107,7 @@ plac                      0.9.6                    py37_0
 preshed                   2.0.1            py37he6710b0_0
 prometheus_client         0.7.1                      py_0
 prompt_toolkit            2.0.10                     py_0
+protobuf                  3.11.2                   pypi_0    pypi
 ptyprocess                0.6.0                    py37_0
 pycodestyle               2.5.0                    pypi_0    pypi
 pycparser                 2.19                     py37_1    conda-forge
@@ -137,11 +137,13 @@ smart_open                1.9.0                      py_0    anaconda
 soupsieve                 1.9.3                    py37_0    anaconda
 spacy                     2.0.16           py37h962f231_0
 sqlite                    3.30.0               h7b6447c_0
+stanfordnlp               0.2.0                    pypi_0    pypi
 terminado                 0.8.2                    py37_0
 testpath                  0.4.2                    py37_0
 thinc                     6.12.1           py37h22eb022_0
 tk                        8.6.8                hbc83047_0
 toolz                     0.10.0                     py_0
+torch                     1.3.1                    pypi_0    pypi
 tornado                   6.0.3            py37h7b6447c_0
 tqdm                      4.39.0                     py_0
 traitlets                 4.3.3                    py37_0
@@ -163,6 +165,10 @@ zlib                      1.2.11               h7b6447c_3
 
 For more details checkout [conda's doc](https://docs.conda.io/projects/conda/en/latest/index.html)
 
+## Word2Vec Model
+
+The Word2Vec model for the french language used in tests is from [Kyubyon's wordvectors](https://github.com/Kyubyong/wordvectors)
+
 # Usage
 
 You can try these programs after setting up your environment by adjusting the configuration file to your liking and running the different functionalities you need:
@@ -172,6 +178,8 @@ You can try these programs after setting up your environment by adjusting the co
 - `ban_list`: Words that if contained in a url will make the url ignored when fetching the content of a website
 - `folder_path`: Folder containing the articles to use
 - `target_path`: Path to save the data
+- `preprocess_version`: 1 to use spacy preprocess (`blog_preprocess` in `auxFuncs.py`), 2 to use standford nlp for preprocess (`blog_preprocess2` in `auxFuncs.py`)
+- `word_embedding`: either `'TdIdf'` or `'word2vec'` defines which word embedding is used for supervised learning tools (Warning: word2vec can not yet be used for naive_bayes)
 
 ## Run Options
 
