@@ -7,7 +7,7 @@ import config
 
 
 def main(argv):
-    help_content = "\n main.py [--fetch_website][--location_tag][--clustering][--topic_modeling][--label_data][--naive_bayes][--svm_classifier][-random_forest][-h]\n\n --fetch_website url: fetch the content of a website by web crawling, will store it in the articles folder with automatically generated name\n --location_tag: find location tags of articles in the folder article_path will by default use the whole articles folder as path\n --clustering n_clusters: cluster articles with articles TD-IDF as feature will by default use the whole articles folder as path (modify in the config file)\n --topic_modeling model_name: perform topic modeling with articles TD-IDF as feature will by default use the whole articles folder as path (modify in the config file)\n --label_data data_number: Label data_number article selected randomly from the folder article_path (modify in the config file) write it at labeled_data.csv (modify target_ path in the config file)\n --naive_bayes labeled_csv: perform naive bayes classification on data expect csv path to labeled data\n --svm_classifier labeled_csv: perform naive bayes classification on data expect csv path to labeled data\n --random_forest labeled_csv: perform naive bayes classification on data expect csv path to labeled data\n -h, --help: displays this help\n"
+    help_content = "\n main.py [--fetch_website][--location_tag][--clustering][--topic_modeling][--label_data][--naive_bayes][--svm_classifier][-random_forest][-h]\n\n --fetch_website url: fetch the content of a website by web crawling, will store it in the articles folder with automatically generated name\n --location_tag: find location tags of articles in the folder article_path will by default use the whole articles folder as path\n --clustering n_clusters: cluster articles with articles TD-IDF as feature will by default use the whole articles folder as path (modify in the config file)\n --topic_modeling model_name: perform topic modeling with articles TD-IDF as feature will by default use the whole articles folder as path (modify in the config file)\n --label_data data_number: Label data_number article selected randomly from the folder article_path (modify in the config file) write it at labeled_data.csv (modify target_ path in the config file)\n --naive_bayes labeled_csv word_embedding: perform naive bayes classification on data expect csv path to labeled data. Word embedding can not take value word2vec\n --svm_classifier labeled_csv word_embedding: perform svm classification on data expect csv path to labeled data. Word embedding can take either tdIdf or word2vec value (change in config file)\n --random_forest labeled_csv word_embedding: perform random forest classification on data expect csv path to labeled data. Word embedding can take either tdIdf or word2vec value (change in config file)\n -h, --help: displays this help\n"
     execute = []
     try:
         opts, args = getopt(argv, "h", [
@@ -82,17 +82,17 @@ def main(argv):
             if program[1] == '':
                 print('Invalid argument')
                 exit(2)
-            aux.naive_bayes(program[1])
+            aux.naive_bayes(program[1], config.word_embedding)
         if program[0] == '--svm_classifier':
             if program[1] == '':
                 print('Invalid argument')
                 exit(2)
-            aux.SVM(program[1])
+            aux.SVM(program[1], config.word_embedding)
         if program[0] == '--random_forest':
             if program[1] == '':
                 print('Invalid argument')
                 exit(2)
-            aux.random_forest(program[1])
+            aux.random_forest(program[1], config.word_embedding)
 
 
 if __name__ == "__main__":

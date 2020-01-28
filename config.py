@@ -3,3 +3,4 @@ banlist = ['#comment', '#respond', '#profile',
 folder_path = './articles'
 target_path = './data_for_ml/labeled_data',
 preprocess_version = 2
+word_embedding = 'word2vec'  # 'tdIdf'
